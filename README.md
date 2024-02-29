@@ -10,12 +10,21 @@ Shoutout to the Oxford Protein Informatics Group (OPIG) for a lot of helpful blo
 
 
 -------------------Directory Structure-----------------------
+
 .
+
 ├── Learned-Embeddings.ipynb
+
 ├── Morgan-Fingerprints.ipynb
+
 ├── README.md
+
 ├── TDC-EDA.ipynb
+
 ├── chem-learn.yml
+
 ├── data
+
 │   └── solubility_aqsoldb.tab
+
 └── directory-structure.md
