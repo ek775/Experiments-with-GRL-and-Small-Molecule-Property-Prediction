@@ -22,8 +22,8 @@ out_channels = 2
 train_data_list = create_pytorch_geometric_graph_data_list_from_smiles_and_labels(train['Drug'], train['Y'])
 print(train_data_list[0].__getattr__)
 # graphs with edge encoding split
-train_data_list = [train_test_split_edges(g) for g in train_data_list]
-print(train_data_list[0].__getattr__)
+#train_data_list = [train_test_split_edges(g) for g in train_data_list]
+#print(train_data_list[0].__getattr__)
 train_dataloader = DataLoader(dataset=train_data_list, batch_size=1, shuffle=True)
 
 num_features = train_data_list[0].num_features
@@ -54,9 +54,9 @@ def train_loop(dataloader, model, optimizer):
         batch = batch.to(device)
         print(f'Graph G: {batch}')
         # Compute prediction and loss
-        z = model.encode(batch.x, batch.train_pos_edge_index)
+        z = model.encode(batch.x, batch.edge_index)
         print(f'Embedded G as: {z}')
-        loss = model.recon_loss(z, batch.train_pos_edge_index)
+        loss = model.recon_loss(z, batch.edge_index)
         # Backpropagation
         loss.backward()
         optimizer.step()
