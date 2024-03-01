@@ -14,19 +14,24 @@ from smiles_to_tensors import *
 #import model
 from encoder_model import *
 
-# AutoEncoder
+### AutoEncoder
 # parameters & data
 out_channels = 2
 
+# graphs
 train_data_list = create_pytorch_geometric_graph_data_list_from_smiles_and_labels(train['Drug'], train['Y'])
-train_data_list = [train_test_split_edges(i) for i in train_data_list] # split edges for reconstruction loss
 print(train_data_list[0].__getattr__)
-train_dataloader = DataLoader(dataset=train_data_list, batch_size=1)
+# graphs with edge encoding split
+train_data_list = [train_test_split_edges(g) for g in train_data_list]
+print(train_data_list[0].__getattr__)
+train_dataloader = DataLoader(dataset=train_data_list, batch_size=1, shuffle=True)
 
 num_features = train_data_list[0].num_features
+print(f"number of features: {num_features}")
 
 # model
 model = GAE(GCNEncoder(num_features, out_channels)) # GAE default decoder is inner dot product
+print(model.parameters)
 
 # loss fn = GAE built in reconstruction loss (Kipf and Welling, 2016)
 
@@ -47,17 +52,27 @@ def train_loop(dataloader, model, optimizer):
     for (k, batch) in enumerate(dataloader):
         optimizer.zero_grad()
         batch = batch.to(device)
+        print(f'Graph G: {batch}')
         # Compute prediction and loss
         z = model.encode(batch.x, batch.train_pos_edge_index)
+        print(f'Embedded G as: {z}')
         loss = model.recon_loss(z, batch.train_pos_edge_index)
         # Backpropagation
         loss.backward()
         optimizer.step()
-        print(f"Reconstruction-Loss: {loss}")
+        return float(loss)
+
+def test(pos_edge_index, neg_edge_index):
+    model.eval()
+    with torch.no_grad():
+        z = model.encode(x, train_pos_edge_index)
+    return model.test(z, pos_edge_index, neg_edge_index)
 
 # move fast and break things
 epochs = 10
 for t in range(epochs):
     print(f"Epoch {t+1}\n-------------------------------")
     train_loop(train_dataloader, model, optimizer)
+    #auc, ap = test(data.test_pos_edge_index, data.test_neg_edge_index)
+    #print(f'AUC: {auc} | AP: {ap}')
 print("Done!")
