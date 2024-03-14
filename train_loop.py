@@ -24,7 +24,7 @@ print(train_data_list[0].__getattr__)
 # graphs with edge encoding split
 #train_data_list = [train_test_split_edges(g) for g in train_data_list]
 #print(train_data_list[0].__getattr__)
-train_dataloader = DataLoader(dataset=train_data_list, batch_size=1, shuffle=True)
+train_dataloader = DataLoader(dataset=train_data_list, batch_size=8, shuffle=False)
 
 num_features = train_data_list[0].num_features
 print(f"number of features: {num_features}")
@@ -36,7 +36,7 @@ print(model.parameters)
 # loss fn = GAE built in reconstruction loss (Kipf and Welling, 2016)
 
 # move to GPU (if available)
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = 'cpu' #stay on cpu for now... #torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = model.to(device)
 
 # inizialize the optimizer
@@ -60,7 +60,7 @@ def train_loop(dataloader, model, optimizer):
         # Backpropagation
         loss.backward()
         optimizer.step()
-        return float(loss)
+    return float(loss)
 
 def test(pos_edge_index, neg_edge_index):
     model.eval()
