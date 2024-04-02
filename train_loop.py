@@ -2,12 +2,12 @@
 import pandas as pd
 from tdc.single_pred import ADME
 
-#load and train-test split (0.7, 0.1, 0.2 by default)
+# import tools for edge splitting
+from torch_geometric.transforms import RandomLinkSplit
+
+#load data
 data = ADME(name = 'Solubility_AqSolDB')
-data = data.get_split()
-train = data['train']
-val = data['valid']
-test = data['test']
+data = data.get_data()
 
 #import data processing scripts
 from smiles_to_tensors import *
@@ -16,27 +16,50 @@ from encoder_model import *
 
 ### AutoEncoder
 # parameters & data
-out_channels = 2
+out_channels = 8
 
-# graphs
-train_data_list = create_pytorch_geometric_graph_data_list_from_smiles_and_labels(train['Drug'], train['Y'])
-print(train_data_list[0].__getattr__)
-# graphs with edge encoding split
-#train_data_list = [train_test_split_edges(g) for g in train_data_list]
-#print(train_data_list[0].__getattr__)
-train_dataloader = DataLoader(dataset=train_data_list, batch_size=8, shuffle=False)
+# convert smiles to graphs, tensors
+data_list = create_pytorch_geometric_graph_data_list_from_smiles_and_labels(data['Drug'], data['Y'])
 
-num_features = train_data_list[0].num_features
-print(f"number of features: {num_features}")
+#remove molecules with insufficient number of bonds
+print("Checking for invalid molecular graphs...")
+graphs_before = len(data_list)
+data_list = [x for x in data_list if len(x.edge_index[1])>3]
+print(f"Removed {(len(data_list)/graphs_before)*100}%")
 
-# model
+# split edges, train/val/test
+transform = RandomLinkSplit(
+    num_val=0.1, 
+    num_test=0.1, 
+    is_undirected=True,
+    split_labels=True, 
+    add_negative_train_samples=False, 
+    neg_sampling_ratio=1.0)
+
+train = []
+val = []
+test = []
+print("Splitting Edges...")
+for i in data_list:
+    train_data, val_data, test_data = transform(i)
+    train.append(train_data)
+    val.append(val_data)
+    test.append(test_data)
+
+# initialize dataloaders
+train_dataloader = DataLoader(dataset=train, batch_size=10, shuffle=True)
+val_dataloader = DataLoader(dataset=val, batch_size=1, shuffle=True)
+test_dataloader = DataLoader(dataset=test, batch_size=1, shuffle=True)
+
+# initialize model
+num_features = data_list[0].num_features
 model = GAE(GCNEncoder(num_features, out_channels)) # GAE default decoder is inner dot product
 print(model.parameters)
 
 # loss fn = GAE built in reconstruction loss (Kipf and Welling, 2016)
 
 # move to GPU (if available)
-device = 'cpu' #stay on cpu for now... #torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = 'cpu' #stay on cpu for now...configuration issues #torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = model.to(device)
 
 # inizialize the optimizer
@@ -45,34 +68,48 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 ### TRAINING ###
 
 def train_loop(dataloader, model, optimizer):
-    size = len(dataloader.dataset)
     # Set the model to training mode - important for batch normalization and dropout layers
     # Unnecessary in this situation but added for best practices
     model.train()
-    for (k, batch) in enumerate(dataloader):
+    total_loss=0
+    for batch in dataloader:
         optimizer.zero_grad()
         batch = batch.to(device)
-        print(f'Graph G: {batch}')
+        #print(f'Graph G: {batch}')
         # Compute prediction and loss
         z = model.encode(batch.x, batch.edge_index)
-        print(f'Embedded G as: {z}')
+        #print(f'Embedded G as: {z}')
         loss = model.recon_loss(z, batch.edge_index)
         # Backpropagation
         loss.backward()
         optimizer.step()
+        #aggregate loss
+        total_loss+=loss
     return float(loss)
 
-def test(pos_edge_index, neg_edge_index):
+def test(val_data, model):
     model.eval()
     with torch.no_grad():
-        z = model.encode(x, train_pos_edge_index)
-    return model.test(z, pos_edge_index, neg_edge_index)
+        auc_total = []
+        ap_total = []
+        for i in val_data:
+            z = model.encode(i.x, i.edge_index)
+            auc, ap = model.test(z, pos_edge_index=i.pos_edge_label_index, neg_edge_index=i.neg_edge_label_index)
+            auc_total+=auc
+            ap_total+=ap
 
-# move fast and break things
+        auc_avg = auc_total/len(auc_total)
+        ap_avg = ap_total/len(ap_total)
+    return auc_avg, ap_avg
+
+# Training and Eval
 epochs = 10
+history = []
 for t in range(epochs):
     print(f"Epoch {t+1}\n-------------------------------")
-    train_loop(train_dataloader, model, optimizer)
-    #auc, ap = test(data.test_pos_edge_index, data.test_neg_edge_index)
-    #print(f'AUC: {auc} | AP: {ap}')
+    epoch_loss = train_loop(dataloader=train_dataloader, model=model, optimizer=optimizer)
+    auc, ap = test(val_data=val_dataloader, model=model)
+    results = [('Loss:', epoch_loss),('AUC:', auc),('Avg Prec', ap)]
+    print(results)
+    history.append(results)
 print("Done!")

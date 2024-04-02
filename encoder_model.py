@@ -3,7 +3,6 @@ import torch
 import torch.nn.functional as F
 from torch_geometric.nn.models import GAE
 from torch_geometric.nn.conv import GCNConv
-from torch_geometric.utils import train_test_split_edges
 
 # Encoder
 class GCNEncoder(torch.nn.Module):
