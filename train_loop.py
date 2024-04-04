@@ -22,10 +22,9 @@ out_channels = 2
 data_list = create_pytorch_geometric_graph_data_list_from_smiles_and_labels(data['Drug'], data['Y'])
 
 #remove molecules with insufficient number of bonds
-#set to 10 bonds due to test ratio of 20%
 print("Checking for invalid molecular graphs...")
 graphs_before = len(data_list)
-data_list = [x for x in data_list if len(x.edge_index[1])>15]
+data_list = [x for x in data_list if len(x.edge_index[1])>30]
 print(f"Removed {(graphs_before-len(data_list))} Invalid Graphs")
 
 # split edges, train/val/test
@@ -117,10 +116,10 @@ print("Done!")
 #write history to csv
 print("===============================")
 print("Saving Model")
-torch.save(model, f="model_15edgemin")
+torch.save(model, f="model_30edgemin")
 print("===============================")
 
 print("Writing Training History...")
 history = pd.DataFrame(history)
-history.to_csv("./train_hist_1")
+history.to_csv("./train_hist_3")
 print("===COMPLETE===")
