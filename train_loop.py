@@ -63,7 +63,7 @@ device = 'cpu' #stay on cpu for now...configuration issues #torch.device('cuda' 
 model = model.to(device)
 
 # inizialize the optimizer
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
 ### TRAINING ###
 
@@ -102,7 +102,7 @@ def test(val_data, model):
     return auc_avg, ap_avg
 
 # Training and Eval
-epochs = 10
+epochs = 100
 history = []
 for t in range(epochs):
     print(f"Epoch {t+1}\n-------------------------------")
@@ -116,10 +116,10 @@ print("Done!")
 #write history to csv
 print("===============================")
 print("Saving Model")
-torch.save(model, f="model_30edgemin")
+torch.save(model, f="model_30edgemin_dLR")
 print("===============================")
 
 print("Writing Training History...")
 history = pd.DataFrame(history)
-history.to_csv("./train_hist_3")
+history.to_csv("./train_hist_4")
 print("===COMPLETE===")
