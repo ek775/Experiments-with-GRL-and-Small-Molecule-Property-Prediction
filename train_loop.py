@@ -16,21 +16,22 @@ from encoder_model import *
 
 ### AutoEncoder
 # parameters & data
-out_channels = 8
+out_channels = 2
 
 # convert smiles to graphs, tensors
 data_list = create_pytorch_geometric_graph_data_list_from_smiles_and_labels(data['Drug'], data['Y'])
 
 #remove molecules with insufficient number of bonds
+#set to 10 bonds due to test ratio of 20%
 print("Checking for invalid molecular graphs...")
 graphs_before = len(data_list)
-data_list = [x for x in data_list if len(x.edge_index[1])>3]
-print(f"Removed {(len(data_list)/graphs_before)*100}%")
+data_list = [x for x in data_list if len(x.edge_index[1])>15]
+print(f"Removed {(graphs_before-len(data_list))} Invalid Graphs")
 
 # split edges, train/val/test
 transform = RandomLinkSplit(
-    num_val=0.1, 
-    num_test=0.1, 
+    num_val=0, 
+    num_test=0.4,
     is_undirected=True,
     split_labels=True, 
     add_negative_train_samples=False, 
@@ -47,7 +48,7 @@ for i in data_list:
     test.append(test_data)
 
 # initialize dataloaders
-train_dataloader = DataLoader(dataset=train, batch_size=10, shuffle=True)
+train_dataloader = DataLoader(dataset=train, batch_size=32, shuffle=True)
 val_dataloader = DataLoader(dataset=val, batch_size=1, shuffle=True)
 test_dataloader = DataLoader(dataset=test, batch_size=1, shuffle=True)
 
@@ -95,11 +96,10 @@ def test(val_data, model):
         for i in val_data:
             z = model.encode(i.x, i.edge_index)
             auc, ap = model.test(z, pos_edge_index=i.pos_edge_label_index, neg_edge_index=i.neg_edge_label_index)
-            auc_total+=auc
-            ap_total+=ap
-
-        auc_avg = auc_total/len(auc_total)
-        ap_avg = ap_total/len(ap_total)
+            auc_total.append(auc)
+            ap_total.append(ap)
+        auc_avg = sum(auc_total)/len(auc_total)
+        ap_avg = sum(ap_total)/len(ap_total)
     return auc_avg, ap_avg
 
 # Training and Eval
@@ -108,8 +108,19 @@ history = []
 for t in range(epochs):
     print(f"Epoch {t+1}\n-------------------------------")
     epoch_loss = train_loop(dataloader=train_dataloader, model=model, optimizer=optimizer)
-    auc, ap = test(val_data=val_dataloader, model=model)
+    auc, ap = test(val_data=test_dataloader, model=model)
     results = [('Loss:', epoch_loss),('AUC:', auc),('Avg Prec', ap)]
     print(results)
     history.append(results)
 print("Done!")
+
+#write history to csv
+print("===============================")
+print("Saving Model")
+torch.save(model, f="model_15edgemin")
+print("===============================")
+
+print("Writing Training History...")
+history = pd.DataFrame(history)
+history.to_csv("./train_hist_1")
+print("===COMPLETE===")
