@@ -16,7 +16,7 @@ from encoder_model import *
 
 ### AutoEncoder
 # parameters & data
-out_channels = 2
+out_channels = 8
 
 # convert smiles to graphs, tensors
 data_list = create_pytorch_geometric_graph_data_list_from_smiles_and_labels(data['Drug'], data['Y'])
@@ -34,7 +34,8 @@ transform = RandomLinkSplit(
     is_undirected=True,
     split_labels=True, 
     add_negative_train_samples=False, 
-    neg_sampling_ratio=1.0)
+    neg_sampling_ratio=1.0,
+    disjoint_train_ratio=0.2)
 
 train = []
 val = []
@@ -56,14 +57,12 @@ num_features = data_list[0].num_features
 model = GAE(GCNEncoder(num_features, out_channels)) # GAE default decoder is inner dot product
 print(model.parameters)
 
-# loss fn = GAE built in reconstruction loss (Kipf and Welling, 2016)
-
 # move to GPU (if available)
 device = 'cpu' #stay on cpu for now...configuration issues #torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = model.to(device)
 
 # inizialize the optimizer
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001, maximize=True)
 
 ### TRAINING ###
 
@@ -116,10 +115,10 @@ print("Done!")
 #write history to csv
 print("===============================")
 print("Saving Model")
-torch.save(model, f="model_30edgemin_dLR")
+torch.save(model, f="./models/model_5")
 print("===============================")
 
 print("Writing Training History...")
 history = pd.DataFrame(history)
-history.to_csv("./train_hist_4")
+history.to_csv("./models/train_hist_5")
 print("===COMPLETE===")
