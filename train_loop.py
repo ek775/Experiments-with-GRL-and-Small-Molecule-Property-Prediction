@@ -14,17 +14,13 @@ from smiles_to_tensors import *
 #import model
 from encoder_model import *
 
-### AutoEncoder
-# parameters & data
-out_channels = 8
-
 # convert smiles to graphs, tensors
 data_list = create_pytorch_geometric_graph_data_list_from_smiles_and_labels(data['Drug'], data['Y'])
 
 #remove molecules with insufficient number of bonds
 print("Checking for invalid molecular graphs...")
 graphs_before = len(data_list)
-data_list = [x for x in data_list if len(x.edge_index[1])>30]
+data_list = [x for x in data_list if len(x.edge_index[1])>20]
 print(f"Removed {(graphs_before-len(data_list))} Invalid Graphs")
 
 # split edges, train/val/test
@@ -48,12 +44,13 @@ for i in data_list:
     test.append(test_data)
 
 # initialize dataloaders
-train_dataloader = DataLoader(dataset=train, batch_size=32, shuffle=True)
+train_dataloader = DataLoader(dataset=train, batch_size=64, shuffle=True)
 val_dataloader = DataLoader(dataset=val, batch_size=1, shuffle=True)
 test_dataloader = DataLoader(dataset=test, batch_size=1, shuffle=True)
 
 # initialize model
 num_features = data_list[0].num_features
+out_channels = 8
 model = GAE(GCNEncoder(num_features, out_channels)) # GAE default decoder is inner dot product
 print(model.parameters)
 
