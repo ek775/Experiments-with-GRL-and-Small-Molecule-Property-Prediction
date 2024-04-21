@@ -9,13 +9,13 @@ import torch_geometric.nn as PyG
 class GCNEncoder(torch.nn.Module):
     def __init__(self, in_channels, out_channels, aggr=PyG.aggr.SoftmaxAggregation(learn=True)):
         super(GCNEncoder, self).__init__()
-        self.conv1 = PyG.GATv2Conv(in_channels, 
+        self.conv1 = PyG.GATConv(in_channels, 
                                  64, 
                                  heads=8, 
                                  dropout=0.1,
                                  add_self_loops=False, 
                                  aggr=aggr) 
-        self.conv2 = PyG.GATv2Conv(-1, 
+        self.conv2 = PyG.GATConv(-1, 
                                  out_channels, 
                                  heads=8,
                                  dropout=0.1, 
