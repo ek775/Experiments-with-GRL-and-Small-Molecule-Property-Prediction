@@ -25,8 +25,9 @@ print(model.parameters)
 device = 'cpu' #stay on cpu for now...configuration issues #torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = model.to(device)
 
-# inizialize the optimizer
+# inizialize the optimizer, loss fn
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001, maximize=True)
+loss_fn = torch.nn.MSELoss()
 
 
 
@@ -34,7 +35,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001, maximize=True)
 
 ### FUNCTIONS ###
 
-def train_loop(dataloader, model, optimizer):
+def train_loop(dataloader, model, optimizer, loss_fn):
     # Set the model to training mode
     model.train()
     total_loss=0
@@ -46,7 +47,7 @@ def train_loop(dataloader, model, optimizer):
         pred_log_sol = model(batch)
         print(pred_log_sol) # debug me
         true_log_sol = batch.y
-        loss = torch.nn.MSELoss(pred_log_sol,true_log_sol)
+        loss = loss_fn(pred_log_sol,true_log_sol)
         # Backpropagation
         loss.backward()
         optimizer.step()
@@ -79,7 +80,7 @@ for e in range(1, epochs+1):
     print(f"=====|Epoch {e}|=====")
     start = time.time()
     #train, backprop, validation_metrics
-    train_loss = train_loop(dataloader=train_dl, model=model, optimizer=optimizer)
+    train_loss = train_loop(dataloader=train_dl, model=model, optimizer=optimizer, loss_fn=loss_fn)
     val_loss, val_preds, val_targets = validate(val_dl, model)
     val_error = [val_preds[i]-val_targets[i] for i in range(len(val_targets))]
     stop = time.time()
