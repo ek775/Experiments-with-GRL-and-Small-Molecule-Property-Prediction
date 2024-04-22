@@ -18,8 +18,7 @@ train_dl = DataLoader(train_data, shuffle=True)
 val_dl = DataLoader(val_data, shuffle=True)
 
 # initialize model
-num_features = train_data[0].num_features
-model = GACsol(in_channels=num_features)
+model = GACsol()
 print(model.parameters)
 
 # move to GPU (if available)
