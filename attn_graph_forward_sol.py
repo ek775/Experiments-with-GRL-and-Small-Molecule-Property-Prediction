@@ -38,4 +38,6 @@ class GACsol(torch.nn.Module):
         x = F.relu(x)
         x = self.lin4(x)
         x = F.relu(x)
-        return self.out(x.T)
+        x = x.T[0] #transpose and remove empty dimension
+        x = F.pad(x, (0, (1000-len(x)))) # pad tensor with zeros, constant length
+        return self.out(x) 
