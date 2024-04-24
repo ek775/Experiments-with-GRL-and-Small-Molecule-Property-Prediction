@@ -23,6 +23,7 @@ class GACsol(torch.nn.Module):
         # MLP and regression out
         self.lin3 = PyG.Linear(-1, embed_channels)
         self.lin4 = PyG.Linear(-1, 1)
+        self.lin5 = PyG.Linear(-1, 1000)
         self.out = PyG.Linear(-1, 1)
 
     def forward(self, batch):
@@ -40,4 +41,6 @@ class GACsol(torch.nn.Module):
         x = F.relu(x)
         x = x.T[0] #transpose and remove empty dimension
         x = F.pad(x, (0, (1000-len(x)))) # pad tensor with zeros, constant length
+        x = self.lin5(x)
+        x = F.relu(x)
         return self.out(x) 
