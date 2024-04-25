@@ -29,8 +29,15 @@ model = model.to(device)
 optimizer = torch.optim.Adam(model.parameters(), 
                              lr=1e-4, 
                              maximize=True, 
-                             weight_decay=.01)
+                             weight_decay=0.1)
 
+# dummy forward call to initialize params for hook
+dummy = test_data[0]
+dummy.to(device)
+model(dummy)
+# register backward hook
+for p in model.parameters():
+    p.register_hook(lambda grad: torch.clamp(grad, min=-1, max=1))
 
 
 
