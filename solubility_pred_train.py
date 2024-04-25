@@ -26,7 +26,10 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = model.to(device)
 
 # inizialize the optimizer
-optimizer = torch.optim.Adam(model.parameters(), lr=0.00001, maximize=True)
+optimizer = torch.optim.Adam(model.parameters(), 
+                             lr=1e-4, 
+                             maximize=True, 
+                             weight_decay=.01)
 
 
 
