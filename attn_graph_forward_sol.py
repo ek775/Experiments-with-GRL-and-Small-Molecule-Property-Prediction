@@ -5,7 +5,7 @@ import torch_geometric.nn as PyG
     
 # Model
 class GACsol(torch.nn.Module):
-    def __init__(self, hidden_dim=16, embed_channels=16, aggr=PyG.aggr.SoftmaxAggregation(learn=True)):
+    def __init__(self, hidden_dim=16, embed_channels=8, aggr=PyG.aggr.SoftmaxAggregation(learn=True)):
         super().__init__()
         # message passing layers
         self.conv1 = PyG.GATConv((-1,-1), 
