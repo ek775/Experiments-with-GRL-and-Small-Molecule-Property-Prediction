@@ -14,7 +14,7 @@ class GACsol(torch.nn.Module):
                                  add_self_loops=False,
                                  aggr=aggr) 
         self.lin1 = PyG.Linear(-1, hidden_dim) # skip connection
-        self.norm1 = PyG.norm.BatchNorm(hidden_dim) # batch normalization
+        self.norm1 = PyG.norm.GraphNorm(hidden_dim) # batch normalization
 
         self.conv2 = PyG.GATv2Conv((-1,-1), 
                                  embed_channels,
@@ -22,7 +22,7 @@ class GACsol(torch.nn.Module):
                                  add_self_loops=False,
                                  aggr=aggr)
         self.lin2 = PyG.Linear(-1, embed_channels) # skip connection
-        self.norm2 = PyG.norm.BatchNorm(embed_channels) # batch normalization
+        self.norm2 = PyG.norm.GraphNorm(embed_channels) # batch normalization
 
         # MLP and regression out
         self.lin3 = PyG.Linear(-1, embed_channels)
