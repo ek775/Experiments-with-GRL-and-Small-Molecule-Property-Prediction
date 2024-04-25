@@ -8,7 +8,7 @@ class GACsol(torch.nn.Module):
     def __init__(self, hidden_dim=16, embed_channels=16, aggr=PyG.aggr.SoftmaxAggregation(learn=True)):
         super().__init__()
         # message passing layers
-        self.conv1 = PyG.GATv2Conv((-1,-1), 
+        self.conv1 = PyG.GATConv((-1,-1), 
                                  hidden_dim, 
                                  dropout=0.1,
                                  add_self_loops=False,
@@ -16,7 +16,7 @@ class GACsol(torch.nn.Module):
         self.lin1 = PyG.Linear(-1, hidden_dim) # skip connection
         self.norm1 = PyG.norm.GraphNorm(hidden_dim) # batch normalization
 
-        self.conv2 = PyG.GATv2Conv((-1,-1), 
+        self.conv2 = PyG.GATConv((-1,-1), 
                                  embed_channels,
                                  dropout=0.1, 
                                  add_self_loops=False,

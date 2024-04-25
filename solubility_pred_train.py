@@ -77,7 +77,7 @@ def validate(dataloader, model):
 
 ### TRAINING AND EVAL ###
 
-history = SummaryWriter('GATv2Conv')
+history = SummaryWriter('GATConv')
 epochs = 100
 import time
 from statistics import fmean
