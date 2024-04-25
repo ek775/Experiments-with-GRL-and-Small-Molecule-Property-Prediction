@@ -37,7 +37,7 @@ dummy.to(device)
 model(dummy)
 # register backward hook
 for p in model.parameters():
-    p.register_hook(lambda grad: torch.clamp(grad, min=-1, max=1))
+    p.register_hook(lambda grad: torch.clamp(grad, min=-0.5, max=0.5))
 
 
 
