@@ -15,14 +15,14 @@ test_data = create_pytorch_geometric_graph_data_list_from_smiles_and_labels(test
 
 # create dataloaders
 train_dl = DataLoader(train_data, shuffle=True)
-val_dl = DataLoader(val_data, shuffle=True)
+val_dl = DataLoader(val_data, shuffle=False)
 
 # initialize model
 model = GACsol()
 print(model.parameters)
 
 # move to GPU (if available)
-device = 'cpu' #stay on cpu for now...configuration issues #torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = model.to(device)
 
 # inizialize the optimizer
@@ -56,15 +56,9 @@ def validate(dataloader, model):
     """compute validation metrics"""
     model.eval()
     with torch.no_grad():
-        preds = []
-        targets = []
-        for i in dataloader:
-            preds.append(model(i)[0])
-            targets.append(i.y[0])
-        
-        preds = torch.Tensor(preds)
-        targets = torch.Tensor(targets)
-        loss = F.mse_loss(preds, targets) #validation loss
+        preds = torch.cat([model(x.to(device)) for x in dataloader])
+        targets = torch.cat([x.y for x in dataloader])
+        loss = F.mse_loss(preds.to(device), targets.to(device)) #validation loss
         return preds, targets, loss
 
 
@@ -93,14 +87,14 @@ for e in range(1, epochs+1):
                         tag_scalar_dict={'train':train_loss,
                                          'val':val_loss}, 
                         global_step=e)
-    history.add_scalar(tag='Raw Validation Error', 
+    history.add_scalar(tag='Mean Validation Error', 
                        scalar_value=val_error,
                        global_step=e)
-    history.add_embedding(torch.stack((val_preds, val_targets)), 
+    history.add_embedding(torch.stack((val_preds.to(device), val_targets.to(device))), 
                           metadata=['val preds', 'val targets (log aq sol)'],
                           global_step=e)
     # show progress in terminal
-    print(f"train loss: {train_loss} | val loss: {val_loss} | raw error: {val_error} | Time: {stop-start}s")
+    print(f"train loss: {train_loss} | val loss: {val_loss} | mean error: {val_error} | Time: {stop-start}s")
 
 #save history
 history.close()
