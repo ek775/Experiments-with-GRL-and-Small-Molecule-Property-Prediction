@@ -29,7 +29,7 @@ model = model.to(device)
 optimizer = torch.optim.Adam(model.parameters(), 
                              lr=1e-4, 
                              maximize=True, 
-                             weight_decay=0.5)
+                             weight_decay=0.9)
 
 # dummy forward call to initialize params for hook
 dummy = test_data[0]
@@ -37,7 +37,7 @@ dummy.to(device)
 model(dummy)
 # register backward hook
 for p in model.parameters():
-    p.register_hook(lambda grad: torch.clamp(grad, min=-0.01, max=0.01))
+    p.register_hook(lambda grad: torch.clamp(grad, min=-0.001, max=0.001))
 
 
 
@@ -77,7 +77,7 @@ def validate(dataloader, model):
 
 ### TRAINING AND EVAL ###
 
-history = SummaryWriter('GATConv')
+history = SummaryWriter('GATv2Conv ++')
 epochs = 100
 import time
 from statistics import fmean
