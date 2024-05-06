@@ -40,12 +40,12 @@ class GACsol(torch.nn.Module):
         # message passing layers w/skip connections, batch norm, and global pooling
         x = self.conv1(x, edge_index) + self.lin1(x)
         x = F.relu(x)
-        #x = self.norm1(x)
-        x = PyG.pool.glob.global_add_pool(x, batch=batch.batch)
+        x = self.norm1(x)
+        #x = PyG.pool.glob.global_add_pool(x, batch=batch.batch)
 
         x = self.conv2(x, edge_index) + self.lin2(x)
         x = F.relu(x)
-        #x = self.norm2(x)
+        x = self.norm2(x)
         x = PyG.pool.glob.global_add_pool(x, batch=batch.batch)
 
         # MLP

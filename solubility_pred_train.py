@@ -14,7 +14,7 @@ val_data = create_pytorch_geometric_graph_data_list_from_smiles_and_labels(val_d
 test_data = create_pytorch_geometric_graph_data_list_from_smiles_and_labels(test_df['Drug'], test_df['Y'])
 
 # create dataloaders
-train_dl = DataLoader(train_data, batch_size=100, shuffle=True)
+train_dl = DataLoader(train_data, batch_size=500, shuffle=True)
 val_dl = DataLoader(val_data, shuffle=False)
 
 # initialize model
